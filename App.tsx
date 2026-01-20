@@ -4,7 +4,7 @@ import { useGameLogic } from './hooks/useGameLogic';
 import GameScene from './components/GameScene';
 import { Difficulty, GameStatus, DIFFICULTIES } from './types';
 import { getTacticalAdvice } from './services/geminiService';
-import { Trophy, Skull, Zap, Info, RefreshCw, Cpu, Clock, Target, Layers, Scissors } from 'lucide-react';
+import { Trophy, Skull, Zap, Info, RefreshCw, Cpu, Clock, Target, Layers, Scissors, Eye, RotateCcw } from 'lucide-react';
 
 const App: React.FC = () => {
   const [difficulty, setDifficulty] = useState<Difficulty>('EASY');
@@ -12,6 +12,7 @@ const App: React.FC = () => {
   const [advice, setAdvice] = useState<string | null>(null);
   const [isConsulting, setIsConsulting] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [overlayVisible, setOverlayVisible] = useState(true);
 
   // Slicer state
   const currentSize = DIFFICULTIES[difficulty].size;
@@ -19,13 +20,22 @@ const App: React.FC = () => {
   const [yRange, setYRange] = useState<[number, number]>([0, currentSize - 1]);
   const [zRange, setZRange] = useState<[number, number]>([0, currentSize - 1]);
 
-  // Reset slicers when difficulty changes
+  // Reset slicers and overlay when difficulty changes or game restarts
   useEffect(() => {
     const size = DIFFICULTIES[difficulty].size;
     setXRange([0, size - 1]);
     setYRange([0, size - 1]);
     setZRange([0, size - 1]);
+    setOverlayVisible(true);
   }, [difficulty]);
+
+  // When board is re-initialized, reset timer and overlay
+  const handleRestart = () => {
+    initGame(difficulty);
+    setTimer(0);
+    setAdvice(null);
+    setOverlayVisible(true);
+  };
 
   useEffect(() => {
     let interval: any;
@@ -75,6 +85,8 @@ const App: React.FC = () => {
       </div>
     </div>
   );
+
+  const isGameOver = board?.status === 'WON' || board?.status === 'LOST';
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden flex flex-col md:flex-row font-sans">
@@ -149,7 +161,7 @@ const App: React.FC = () => {
               {(['EASY', 'MEDIUM', 'HARD'] as Difficulty[]).map((d) => (
                 <button
                   key={d}
-                  onClick={() => { setDifficulty(d); setTimer(0); }}
+                  onClick={() => { setDifficulty(d); }}
                   className={`flex-1 py-2 text-[10px] font-black rounded transition-all border ${
                     difficulty === d 
                       ? 'bg-blue-600 border-blue-400 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' 
@@ -161,7 +173,7 @@ const App: React.FC = () => {
               ))}
             </div>
             <button 
-              onClick={() => { initGame(difficulty); setTimer(0); setAdvice(null); }}
+              onClick={handleRestart}
               className="w-full py-2.5 bg-white hover:bg-zinc-200 text-black font-black uppercase text-[11px] rounded-lg flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg"
             >
               <RefreshCw size={14} /> Re-Initialize
@@ -201,7 +213,7 @@ const App: React.FC = () => {
         />
         
         {/* Game End Overlay */}
-        {board && (board.status === 'WON' || board.status === 'LOST') && (
+        {board && isGameOver && overlayVisible && (
           <div className="absolute inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-500">
             <div className="text-center p-10 rounded-3xl border border-zinc-700 bg-zinc-900/90 shadow-[0_0_50px_rgba(0,0,0,0.5)] max-w-sm mx-auto">
               {board.status === 'WON' ? (
@@ -217,14 +229,36 @@ const App: React.FC = () => {
                   <p className="text-zinc-400 mb-8 text-sm font-medium">Matrix collapse detected.</p>
                 </>
               )}
-              <button 
-                onClick={() => { initGame(difficulty); setTimer(0); setAdvice(null); }}
-                className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl uppercase tracking-[0.2em] transition-all active:scale-95 shadow-xl text-xs"
-              >
-                Restart Simulation
-              </button>
+              
+              <div className="space-y-3">
+                <button 
+                  onClick={handleRestart}
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-xl uppercase tracking-[0.2em] transition-all active:scale-95 shadow-xl text-xs flex items-center justify-center gap-2"
+                >
+                  <RotateCcw size={16} /> Restart Simulation
+                </button>
+                
+                {board.status === 'LOST' && (
+                  <button 
+                    onClick={() => setOverlayVisible(false)}
+                    className="w-full py-3 bg-zinc-800/50 hover:bg-zinc-700 text-zinc-300 font-black rounded-xl uppercase tracking-[0.2em] transition-all active:scale-95 text-[10px] flex items-center justify-center gap-2 border border-zinc-700/50"
+                  >
+                    <Eye size={14} /> Review Matrix
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+        )}
+
+        {/* Back to Results button during review */}
+        {isGameOver && !overlayVisible && (
+          <button 
+            onClick={() => setOverlayVisible(true)}
+            className="absolute top-6 left-1/2 -translate-x-1/2 bg-zinc-900/90 backdrop-blur-md px-6 py-3 rounded-full border border-zinc-700 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl flex items-center gap-2 hover:bg-zinc-800 transition-colors z-40"
+          >
+            <Info size={14} /> Show Results
+          </button>
         )}
 
         {/* Interaction Info */}
