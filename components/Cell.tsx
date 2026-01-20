@@ -1,8 +1,6 @@
 
-import React, { useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
-import { Text, RoundedBox } from '@react-three/drei';
-import * as THREE from 'three';
+import React, { useState } from 'react';
+import { Text, RoundedBox, Billboard } from '@react-three/drei';
 import { CellState } from '../types';
 
 interface CellProps {
@@ -13,30 +11,31 @@ interface CellProps {
 }
 
 const Cell: React.FC<CellProps> = ({ state, onReveal, onFlag, isGameOver }) => {
-  const meshRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
 
   const { x, y, z, isMine, isRevealed, isFlagged, neighborMines } = state;
 
-  // Visual logic
   const getCellColor = () => {
     if (isRevealed) {
-      if (isMine) return '#ff4444';
-      return '#222222';
+      if (isMine) return '#ff0000';
+      return '#000000';
     }
-    if (isFlagged) return '#facc15';
-    return hovered ? '#444444' : '#333333';
+    if (isFlagged) return '#fbbf24';
+    return hovered ? '#60a5fa' : '#1e293b';
   };
 
   const getOpacity = () => {
-    if (isRevealed) return 0.9;
-    // Transparency helps see "inside" the cube if cells are hidden
-    // but for the outer shell, we keep it solid until revealed
-    return 0.5;
+    if (isRevealed) {
+      // If it's a number cell, show a very faint floor. If empty, hide it almost completely to see through the cube.
+      return neighborMines > 0 || isMine ? 0.1 : 0.01;
+    }
+    // Unrevealed cells are semi-transparent so we can see the "core" of the cube
+    return 0.4;
   };
 
   const handlePointerDown = (e: any) => {
     e.stopPropagation();
+    // 0: Left click, 2: Right click
     if (e.button === 0) {
       onReveal(x, y, z);
     } else if (e.button === 2) {
@@ -46,53 +45,66 @@ const Cell: React.FC<CellProps> = ({ state, onReveal, onFlag, isGameOver }) => {
 
   return (
     <group 
-      ref={meshRef} 
       position={[x, y, z]}
       onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
       onPointerOut={() => setHovered(false)}
       onPointerDown={handlePointerDown}
     >
+      {/* The Cell Body */}
       <RoundedBox 
-        args={[0.9, 0.9, 0.9]} 
-        radius={0.05} 
+        args={[0.8, 0.8, 0.8]} 
+        radius={0.08} 
         smoothness={4}
       >
         <meshStandardMaterial 
           color={getCellColor()} 
           transparent 
           opacity={getOpacity()}
-          roughness={0.2}
+          roughness={0.1}
           metalness={0.8}
-          emissive={isFlagged ? '#facc15' : isRevealed && isMine ? '#ff0000' : '#000000'}
-          emissiveIntensity={hovered || (isRevealed && isMine) ? 0.5 : 0}
+          emissive={isFlagged ? '#fbbf24' : (hovered && !isRevealed) ? '#3b82f6' : '#000000'}
+          emissiveIntensity={(hovered && !isRevealed) || isFlagged ? 0.5 : 0}
+          depthWrite={!isRevealed} // Helps with transparency sorting
         />
       </RoundedBox>
 
+      {/* Neighbor Count - Using Billboard to ensure it always faces the camera */}
       {isRevealed && !isMine && neighborMines > 0 && (
-        <Text
-          position={[0, 0, 0.46]}
-          fontSize={0.4}
-          color={neighborMines === 1 ? '#3b82f6' : neighborMines === 2 ? '#10b981' : '#ef4444'}
-          anchorX="center"
-          anchorY="middle"
-          font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff"
-        >
-          {neighborMines}
-        </Text>
+        <Billboard follow={true}>
+          <Text
+            fontSize={0.6}
+            color={
+              neighborMines === 1 ? '#60a5fa' : 
+              neighborMines === 2 ? '#4ade80' : 
+              neighborMines === 3 ? '#f87171' : 
+              neighborMines === 4 ? '#818cf8' :
+              '#fb923c'
+            }
+            anchorX="center"
+            anchorY="middle"
+            outlineWidth={0.06}
+            outlineColor="#000000"
+            font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff"
+            // High render order so it's drawn after the boxes
+            renderOrder={100}
+          >
+            {neighborMines}
+          </Text>
+        </Billboard>
       )}
 
+      {/* Mine Visual */}
       {isRevealed && isMine && (
-        <mesh position={[0, 0, 0]}>
-          <sphereGeometry args={[0.3, 16, 16]} />
-          <meshBasicMaterial color="black" />
-        </mesh>
+        <Billboard>
+           <Text fontSize={0.7} renderOrder={101}>💣</Text>
+        </Billboard>
       )}
 
+      {/* Flag Visual */}
       {isFlagged && !isRevealed && (
-        <mesh position={[0, 0.1, 0]}>
-          <boxGeometry args={[0.1, 0.4, 0.1]} />
-          <meshBasicMaterial color="#ef4444" />
-        </mesh>
+        <Billboard>
+          <Text fontSize={0.6} renderOrder={101}>🚩</Text>
+        </Billboard>
       )}
     </group>
   );
