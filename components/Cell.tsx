@@ -17,20 +17,20 @@ const Cell: React.FC<CellProps> = ({ state, onReveal, onFlag, isGameOver }) => {
 
   const getCellColor = () => {
     if (isRevealed) {
-      if (isMine) return '#ff0000';
-      return '#000000';
+      if (isMine) return '#ef4444'; // red-500
+      return '#f8fafc'; // slate-50
     }
-    if (isFlagged) return '#fbbf24';
-    return hovered ? '#60a5fa' : '#1e293b';
+    if (isFlagged) return '#f59e0b'; // amber-500
+    return hovered ? '#3b82f6' : '#94a3b8'; // blue-500 or slate-400
   };
 
   const getOpacity = () => {
     if (isRevealed) {
-      // If it's a number cell, show a very faint floor. If empty, hide it almost completely to see through the cube.
-      return neighborMines > 0 || isMine ? 0.1 : 0.01;
+      // If it's a number cell, show a very faint floor. If empty, hide it almost completely.
+      return neighborMines > 0 || isMine ? 0.2 : 0.02;
     }
-    // Unrevealed cells are semi-transparent so we can see the "core" of the cube
-    return 0.4;
+    // Unrevealed cells are semi-transparent
+    return 0.5;
   };
 
   const handlePointerDown = (e: any) => {
@@ -60,32 +60,31 @@ const Cell: React.FC<CellProps> = ({ state, onReveal, onFlag, isGameOver }) => {
           color={getCellColor()} 
           transparent 
           opacity={getOpacity()}
-          roughness={0.1}
-          metalness={0.8}
+          roughness={0.2}
+          metalness={0.1}
           emissive={isFlagged ? '#fbbf24' : (hovered && !isRevealed) ? '#3b82f6' : '#000000'}
-          emissiveIntensity={(hovered && !isRevealed) || isFlagged ? 0.5 : 0}
-          depthWrite={!isRevealed} // Helps with transparency sorting
+          emissiveIntensity={(hovered && !isRevealed) || isFlagged ? 0.3 : 0}
+          depthWrite={!isRevealed}
         />
       </RoundedBox>
 
-      {/* Neighbor Count - Using Billboard to ensure it always faces the camera */}
+      {/* Neighbor Count */}
       {isRevealed && !isMine && neighborMines > 0 && (
         <Billboard follow={true}>
           <Text
             fontSize={0.6}
             color={
-              neighborMines === 1 ? '#60a5fa' : 
-              neighborMines === 2 ? '#4ade80' : 
-              neighborMines === 3 ? '#f87171' : 
-              neighborMines === 4 ? '#818cf8' :
-              '#fb923c'
+              neighborMines === 1 ? '#2563eb' : // blue-600
+              neighborMines === 2 ? '#16a34a' : // green-600
+              neighborMines === 3 ? '#dc2626' : // red-600
+              neighborMines === 4 ? '#4f46e5' : // indigo-600
+              '#ea580c' // orange-600
             }
             anchorX="center"
             anchorY="middle"
             outlineWidth={0.06}
-            outlineColor="#000000"
+            outlineColor="#ffffff"
             font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff"
-            // High render order so it's drawn after the boxes
             renderOrder={100}
           >
             {neighborMines}
@@ -96,14 +95,14 @@ const Cell: React.FC<CellProps> = ({ state, onReveal, onFlag, isGameOver }) => {
       {/* Mine Visual */}
       {isRevealed && isMine && (
         <Billboard>
-           <Text fontSize={0.7} renderOrder={101}>💣</Text>
+           <Text fontSize={0.7} renderOrder={101} outlineWidth={0.05} outlineColor="#ffffff">💣</Text>
         </Billboard>
       )}
 
       {/* Flag Visual */}
       {isFlagged && !isRevealed && (
         <Billboard>
-          <Text fontSize={0.6} renderOrder={101}>🚩</Text>
+          <Text fontSize={0.6} renderOrder={101} outlineWidth={0.05} outlineColor="#ffffff">🚩</Text>
         </Billboard>
       )}
     </group>

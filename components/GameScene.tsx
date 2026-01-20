@@ -1,7 +1,7 @@
 
 import React, { Suspense, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stars, Environment, PerspectiveCamera, ContactShadows, Float } from '@react-three/drei';
+import { OrbitControls, Environment, PerspectiveCamera, ContactShadows, Float } from '@react-three/drei';
 import Cell from './Cell';
 import { BoardState } from '../types';
 
@@ -40,7 +40,7 @@ const GameScene: React.FC<GameSceneProps> = ({ board, onReveal, onFlag, xRange, 
       onContextMenu={(e) => e.preventDefault()}
       camera={{ position: [size * 1.5, size * 1.5, size * 1.5], fov: 45 }}
     >
-      <color attach="background" args={['#08080a']} />
+      <color attach="background" args={['#f1f5f9']} />
       <Suspense fallback={null}>
         <OrbitControls 
           enableDamping 
@@ -50,13 +50,13 @@ const GameScene: React.FC<GameSceneProps> = ({ board, onReveal, onFlag, xRange, 
           makeDefault
         />
         
-        <Stars radius={150} depth={60} count={2000} factor={4} saturation={1} fade speed={0.4} />
+        {/* Fix: Environment preset 'neutral' is not a valid preset type. Changed to 'city' */}
         <Environment preset="city" />
         
-        <ambientLight intensity={0.5} />
-        <pointLight position={[15, 15, 15]} intensity={1.2} color="#ffffff" castShadow />
-        <pointLight position={[-15, -15, -15]} intensity={0.8} color="#2563eb" />
-        <spotLight position={[0, size * 2, 0]} angle={0.6} penumbra={1} intensity={1.5} castShadow />
+        <ambientLight intensity={0.7} />
+        <pointLight position={[15, 15, 15]} intensity={1.5} color="#ffffff" castShadow />
+        <pointLight position={[-15, -15, -15]} intensity={0.5} color="#cbd5e1" />
+        <spotLight position={[0, size * 2, 0]} angle={0.6} penumbra={1} intensity={1} castShadow />
 
         <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.1}>
           <group position={[-offset, -offset, -offset]}>
@@ -74,9 +74,9 @@ const GameScene: React.FC<GameSceneProps> = ({ board, onReveal, onFlag, xRange, 
 
         <ContactShadows 
           position={[0, -offset - 0.5, 0]} 
-          opacity={0.4} 
+          opacity={0.1} 
           scale={size * 3} 
-          blur={2.5} 
+          blur={3} 
           far={size * 2} 
         />
       </Suspense>

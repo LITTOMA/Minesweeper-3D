@@ -3,7 +3,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { CellState, BoardState } from "../types";
 
 export const getTacticalAdvice = async (board: BoardState): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  // Fix: Use a named parameter for the API key from process.env.API_KEY directly as per SDK guidelines.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   // Create a simplified view of the board for the AI
   const revealedCells = [];
@@ -33,13 +34,15 @@ export const getTacticalAdvice = async (board: BoardState): Promise<string> => {
   `;
 
   try {
+    // Fix: Using gemini-3-pro-preview for complex reasoning tasks like Minesweeper tactical analysis.
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         temperature: 0.7,
       },
     });
+    // Fix: Use .text property directly (not a method).
     return response.text || "I couldn't analyze the board right now. Stay sharp, Commander.";
   } catch (error) {
     console.error("Gemini Error:", error);
