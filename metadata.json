@@ -1,0 +1,5 @@
+{
+  "name": "Minesweeper 3D: Cubic Genesis",
+  "description": "A fully immersive 3D Minesweeper experience. Navigate a three-dimensional grid of peril, use strategy to clear the cube, and consult a Gemini-powered tactical advisor for hints.",
+  "requestFramePermissions": []
+}
